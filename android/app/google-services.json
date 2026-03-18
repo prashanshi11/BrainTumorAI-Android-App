@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "942439307973",
+    "project_id": "braintumorai-a2666",
+    "storage_bucket": "braintumorai-a2666.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942439307973:android:3a721ec84eb1c7a26c2eac",
+        "android_client_info": {
+          "package_name": "com.example.braintumorai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-k6c_ieR3oyHDdU0Uzv-EavrHcJeGWCM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
