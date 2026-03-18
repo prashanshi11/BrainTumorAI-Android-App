@@ -1,30 +1,19 @@
-# ==============================
-# 🔹 Android
-# ==============================
-*.iml
-.gradle
-/local.properties
-/.idea
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-
-/build
-/captures
-.externalNativeBuild
-.cxx
-
-# ==============================
-# 🔹 Python (VERY IMPORTANT)
-# ==============================
+# Python
 venv/
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# ==============================
-#
+# Models (big files)
+model/
+*.h5
+*.pkl
+*.npy
+
+# Android
+.gradle/
+build/
+local.properties
+.idea/
+
+# Firebase
+google-services.json
