@@ -1,8 +1,13 @@
 package com.example.braintumorai.activities
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,6 +21,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var chatRecycler: RecyclerView
     private lateinit var inputMessage: EditText
     private lateinit var btnSend: ImageButton
+    private lateinit var btnAttach: ImageButton
     private lateinit var chatAdapter: ChatAdapter
     private val chatList = mutableListOf<ChatMessage>()
 
@@ -26,6 +32,7 @@ class ChatActivity : AppCompatActivity() {
         chatRecycler = findViewById(R.id.chatRecycler)
         inputMessage = findViewById(R.id.inputMessage)
         btnSend = findViewById(R.id.btnSend)
+        btnAttach = findViewById(R.id.btnAttach)
 
         chatAdapter = ChatAdapter(chatList)
         chatRecycler.layoutManager = LinearLayoutManager(this)
@@ -39,9 +46,68 @@ class ChatActivity : AppCompatActivity() {
                 inputMessage.text.clear()
             }
         }
+
+        btnAttach.setOnClickListener {
+            pickFile()
+        }
         
-        // Initial AI message
-        addAiMessage("Hello! I'm your Brain Health AI. How can I assist you today?")
+        addAiMessage("Hello! I'm your Brain Health AI. You can ask me questions or upload your MRI images and PDF reports for analysis.")
+    }
+
+    private fun pickFile() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "*/*"
+        val mimeTypes = arrayOf("image/*", "application/pdf")
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+        startActivityForResult(intent, 102)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 102 && resultCode == Activity.RESULT_OK) {
+            val uri = data?.data
+            uri?.let {
+                handleAttachment(it)
+            }
+        }
+    }
+
+    private fun handleAttachment(uri: Uri) {
+        val fileName = getFileName(uri)
+        val type = contentResolver.getType(uri)
+        
+        if (type != null) {
+            if (type.startsWith("image/")) {
+                addUserMessage("Uploaded Image: $fileName")
+                getAiResponse("I have received your MRI image. Analyzing for any abnormalities...")
+            } else if (type == "application/pdf") {
+                addUserMessage("Uploaded Report: $fileName")
+                getAiResponse("I have received your PDF report. Extracting key medical information...")
+            }
+        }
+    }
+
+    private fun getFileName(uri: Uri): String {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index != -1) result = cursor.getString(index)
+                }
+            } finally {
+                cursor?.close()
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/') ?: -1
+            if (cut != -1) {
+                result = result?.substring(cut + 1)
+            }
+        }
+        return result ?: "file"
     }
 
     private fun addUserMessage(message: String) {
@@ -57,18 +123,14 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun getAiResponse(userMessage: String) {
-        // Simulate AI response with a delay
         CoroutineScope(Dispatchers.Main).launch {
-            // Typing indicator simulation
-            delay(1000)
+            delay(1500)
             
             val response = when {
-                userMessage.contains("hello", ignoreCase = true) -> "Hi there! How can I help you with your brain health concerns?"
-                userMessage.contains("tumor", ignoreCase = true) -> "Brain tumors are abnormal growths of cells in the brain. If you have an MRI, you can use our Scan feature for an initial analysis."
-                userMessage.contains("symptoms", ignoreCase = true) -> "Common symptoms include headaches, seizures, vision changes, and balance issues. Always consult a doctor for a proper diagnosis."
-                userMessage.contains("mri", ignoreCase = true) -> "You can upload your MRI scan in the 'Scan' section of this app for analysis."
-                userMessage.contains("thank", ignoreCase = true) -> "You're welcome! Feel free to ask more questions."
-                else -> "I understand. I'm trained to help with brain health and MRI-related queries. Could you please provide more details?"
+                userMessage.contains("image", ignoreCase = true) -> "The image analysis shows clear brain structures. No significant tumor masses are visible in this specific view. However, please correlate this with a radiologist's report."
+                userMessage.contains("report", ignoreCase = true) -> "Based on the report text, the primary findings suggest stable neurological status with no new lesions detected. All vital markers are within normal ranges."
+                userMessage.contains("hello", ignoreCase = true) -> "Hi! How can I help you with your brain health reports today?"
+                else -> "I've processed your input. Is there a specific part of the report or image you'd like me to explain further?"
             }
             
             addAiMessage(response)

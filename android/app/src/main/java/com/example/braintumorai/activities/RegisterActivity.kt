@@ -6,6 +6,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.braintumorai.R
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.userProfileChangeRequest
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -58,24 +59,27 @@ class RegisterActivity : AppCompatActivity() {
         btnRegister.isEnabled = false
 
         auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener {
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val user = auth.currentUser
+                    val profileUpdates = userProfileChangeRequest {
+                        displayName = name
+                    }
 
-                btnRegister.isEnabled = true
-
-                if (it.isSuccessful) {
-
-                    Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show()
-
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    finish()
-
+                    user?.updateProfile(profileUpdates)
+                        ?.addOnCompleteListener { profileTask ->
+                            btnRegister.isEnabled = true
+                            if (profileTask.isSuccessful) {
+                                Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this, HomeActivity::class.java))
+                                finish()
+                            } else {
+                                Toast.makeText(this, "Error updating profile: ${profileTask.exception?.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                 } else {
-
-                    Toast.makeText(
-                        this,
-                        "Error: ${it.exception?.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    btnRegister.isEnabled = true
+                    Toast.makeText(this, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }
             }
     }
